@@ -1,6 +1,6 @@
 # ================= initialization =================== #
 
-AC_INIT([MATE Sensors Applet], [1.8.0], [http://www.mate-desktop.org],
+AC_INIT([MATE Sensors Applet], [1.9.0], [http://www.mate-desktop.org],
 [mate-sensors-applet])
 
 AC_CONFIG_SRCDIR([sensors-applet/main.c])
@@ -22,7 +22,7 @@ GETTEXT_PACKAGE=mate-sensors-applet
 AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE, "$GETTEXT_PACKAGE")
 AC_SUBST(GETTEXT_PACKAGE)
 AM_GLIB_GNU_GETTEXT
-AC_PROG_INTLTOOL
+IT_PROG_INTLTOOL
 
 # ========== export compiler / linker options ======== #
 AC_SUBST(CFLAGS)
@@ -47,18 +47,37 @@ AC_CHECK_HEADERS(
 )   
 
 GLIB_REQUIRED=2.26.0
-GTK_REQUIRED=2.14.0
 LIBPANEL_REQUIRED=1.1.0
 LIBNOTIFY_REQUIRED=0.7.0
 LIBCAIRO_REQUIRED=1.0.4
 LIBDBUSGLIB_REQUIRED=0.80
 LIBATASMART_REQUIRED=0.16
 
+# ================= GTK+ API version ================= #
+AC_MSG_CHECKING([which gtk+ version to compile against])
+AC_ARG_WITH([gtk],
+  [AS_HELP_STRING([--with-gtk=2.0|3.0],[which gtk+ version to compile against (default: 2.0)])],
+  [case "$with_gtk" in
+     2.0|3.0) ;;
+     *) AC_MSG_ERROR([invalid gtk version specified]) ;;
+   esac],
+  [with_gtk=2.0])
+AC_MSG_RESULT([$with_gtk])
+
+case "$with_gtk" in
+  2.0) GTK_API_VERSION=2.0
+       GTK_REQUIRED=2.24.0
+       ;;
+  3.0) GTK_API_VERSION=3.0
+       GTK_REQUIRED=3.0.0
+       ;;
+esac
+
 PKG_CHECK_MODULES(GLIB, glib-2.0 >= $GLIB_REQUIRED gio-2.0)
 AC_SUBST(GLIB_CFLAGS)
 AC_SUBST(GLIB_LIBS)
 
-PKG_CHECK_MODULES(GTK, gtk+-2.0 >= $GTK_REQUIRED)
+PKG_CHECK_MODULES(GTK, gtk+-$GTK_API_VERSION >= $GTK_REQUIRED)
 AC_SUBST(GTK_CFLAGS)
 AC_SUBST(GTK_LIBS)
 
@@ -90,7 +109,7 @@ else
 	AC_SUBST(LIBATASMART_LIBS)
 fi
 
-AM_CONDITIONAL(UDISKS, test -n "$DBUSGLIB_CFLAGS" -a -n "$LIBATASMART_CFLAGS")
+AM_CONDITIONAL(UDISKS, test -n "$DBUSGLIB_LIBS" -a -n "$LIBATASMART_LIBS")
 
 # support for libnotify
 LIBNOTIFY_CFLAGS=
